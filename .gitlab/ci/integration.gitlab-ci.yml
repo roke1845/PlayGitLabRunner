@@ -1,0 +1,14 @@
+integration-test-stg:
+    stage: integrationTest
+    variables:
+        K8S_CONFIG_PATH: /twk8s/prod/config
+        CONFIG_PATH: conf/tw/prod/
+        DEPLOY_PATH: deploy/deployment/
+    script:
+        - cp -r ${CONFIG_PATH}application.conf ${DEPLOY_PATH}configMapGenerator/application.conf
+        - cp -r ${CONFIG_PATH}routes ${DEPLOY_PATH}configMapGenerator/routes
+        - kubectl apply -k ${DEPLOY_PATH}configMapGenerator/ --namespace=${NAMESPACE} --dry-run -o yaml
+        - kubectl apply -f ${DEPLOY_PATH}Deployment.yaml --kubeconfig /twk8s/prod/config --namespace=${NAMESPACE} --dry-run -o yaml
+        - echo "kubectl set image deployment/${PROJECT_NAME} ${PROJECT_NAME}=${REGISTRY_PATH}:${PROJECT_VERSION} --kubeconfig ${K8S_CONFIG_PATH} --namespace=${NAMESPACE}"
+    only:
+        - /^release\/tw\/prod\/.*$/

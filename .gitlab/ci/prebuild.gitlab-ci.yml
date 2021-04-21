@@ -1,0 +1,31 @@
+prebuild:
+    before_script:
+        - |
+            MASTER_SRC_REG="^(dev|hotfix\/FBD-*)"
+            DEV_SRC_REG="^(features\/FBD-*|hotfix\/FBD-*)"
+            if [[ $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ $DEV_SRC_REG ]] && [[ $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "dev" ]]; then
+                echo "[Passed] MR source branch is $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME and target branch is $CI_MERGE_REQUEST_TARGET_BRANCH_NAME."
+            elif [[ $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ $MASTER_SRC_REG ]] && [[ $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master" ]]; then
+                echo "[Passed] MR source branch is $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME and target branch is $CI_MERGE_REQUEST_TARGET_BRANCH_NAME."
+            else
+                echo "[Fail] Wrong source branch $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME and target branch $CI_MERGE_REQUEST_TARGET_BRANCH_NAME."; false; fi
+        - |
+            if [ -d ~/.gitlab-ci/${PROJECT_NAME} ]; then
+              echo "Get latest version is : $(eval ${LATEST_VERSION})"
+            else
+              echo "Create path"
+              mkdir -p ~/.gitlab-ci/${PROJECT_NAME}
+              echo "Init version file ~/.gitlab-ci/${PROJECT_NAME}/version"
+              echo "1.0.0" > ~/.gitlab-ci/${PROJECT_NAME}/version
+            fi
+
+    stage: prebuild
+    script:
+        - sbt testQuick
+        - sbt dist
+
+    tags:
+        - public
+    only:
+        refs:
+            - merge_requests

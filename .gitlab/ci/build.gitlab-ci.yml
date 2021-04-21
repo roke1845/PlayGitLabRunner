@@ -1,0 +1,39 @@
+.build-image:
+    before_script:
+        - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD "$CI_REGISTRY"
+        - export PROJECT_VERSION=`awk -f .gitlab/inc_version.awk $(eval ${LATEST_VERSION})`
+
+    stage: build
+    script:
+        - cp conf/tw/${ENV}/application.conf conf/application.conf
+        - cp conf/tw/${ENV}/routes conf/routes
+        - ansible-playbook -e env=${ENV} -e CI_PROJECT_DIR=$CI_PROJECT_DIR .gitlab/ansible/main.yml
+        - sbt dist                
+        - docker build --pull -t "$REGISTRY_PATH:${PROJECT_VERSION}" .
+        - docker push "$REGISTRY_PATH:${PROJECT_VERSION}"
+        - docker rmi "$REGISTRY_PATH:${PROJECT_VERSION}"
+
+    after_script:
+        - old_version=`echo $(eval ${LATEST_VERSION})`
+        - export PROJECT_VERSION=`awk -f .gitlab/inc_version.awk ${old_version}`
+        - echo ${PROJECT_VERSION} > ~/.gitlab-ci/${PROJECT_NAME}/version
+        - echo "Update version from ${old_version} to ${PROJECT_VERSION}"
+
+    tags:
+        - public
+
+build-prod:
+    extends: .build-image
+    variables:
+        ENV: prod
+    only:
+        refs:
+            - master
+
+build-stag:
+    extends: .build-image
+    variables:
+        ENV: stag
+    only:
+        refs:
+            - dev

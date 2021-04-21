@@ -1,0 +1,15 @@
+UpdateVersion:
+    stage: updateVersion
+    script:
+        - old_version=`echo $(eval ${LATEST_VERSION})`
+        - export PROJECT_VERSION=`awk -f .gitlab/inc_version.awk ${old_version}`
+        - echo ${PROJECT_VERSION} > ~/.gitlab-ci/${PROJECT_NAME}/version
+        - echo "Update version from ${old_version} to ${PROJECT_VERSION}"
+    tags:
+      - public
+      
+    only:
+        refs:
+            - merge_requests
+        variables:
+            - $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^(features\/FBD-*|hotfix\/FBD-*)/

@@ -1,0 +1,30 @@
+.tag:
+    stage: tag
+    script:
+        - git branch -a
+        - git remote set-url origin ${PROJECT_URL}
+        - VERSTION=$(cat ~/.gitlab-ci/${PROJECT_NAME}/version)
+        - TAG=release/tw/${ENV}/${VERSTION}
+        - git tag -a ${TAG} -m "Version created by gitlab-ci Build"
+        - git push origin ${TAG}
+
+    tags:
+        - public
+
+
+stagTag:
+    extends: .tag
+    variables:
+        ENV: "stag"
+    only:
+        refs:
+            - dev
+
+prodTag:
+    extends: .tag
+    variables:
+        ENV: "prod"
+    only:
+        refs:
+            - master
+

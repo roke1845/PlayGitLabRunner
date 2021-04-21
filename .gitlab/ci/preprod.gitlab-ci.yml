@@ -1,0 +1,21 @@
+
+deploy-tw-preprod:
+    before_script:
+        - echo "deploy stag environment"
+    stage: deploy-preprod
+    extends: .TWProd
+    script:
+        - K8S_FOLDER=twk8s
+        - CONFIG_PATH=conf/tw/stag/
+        - DEPLOY_PATH=deploy/twChart/stag/
+        - cp -r ${CONFIG_PATH}application.conf ${DEPLOY_PATH}application.conf
+        - cp -r ${CONFIG_PATH}routes ${DEPLOY_PATH}routes
+        - cd ${DEPLOY_PATH}
+        - /twk8s/helm3 upgrade --install --dry-run --debug --namespace $NAMESPACE --kubeconfig /$K8S_FOLDER/stage/config --set image.tag=$(eval $LATEST_VERSION) $PROJECT_NAME -f values/data-factory.yaml .
+   
+    only:
+        refs:
+            - dev
+            
+        variables:
+            - $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^(features\/FBD-*|hotfix\/FBD-*)/

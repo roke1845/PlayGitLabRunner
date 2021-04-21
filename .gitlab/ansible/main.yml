@@ -1,0 +1,13 @@
+---
+- hosts: localhost
+  become: no
+  gather_facts: no
+
+  tasks:
+    - include_vars: "vars/{{ env }}.yml"
+
+    - name: Create index.html
+      template:
+        src: index.html
+        dest: "{{ CI_PROJECT_DIR }}/public/swagger/index.html"
+        force: true
